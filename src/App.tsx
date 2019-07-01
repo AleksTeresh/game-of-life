@@ -5,13 +5,19 @@ import { CellProps } from './components/Cell';
 
 export default function App() {
   const [gens, setGens] = useState([createNewGeneration()])
+  const [currGenIdx, setCurrGenIdx] = useState(0)
 
   const evenHandler = (e: any) => {
     if (e.keyCode === 13) { // if Enter
-      setGens([
-        ...gens,
-        createNewGeneration(gens[gens.length - 1])
-      ])
+      if (currGenIdx + 1 >= gens.length) {
+        setGens([
+          ...gens,
+          createNewGeneration(gens[gens.length - 1])
+        ])
+      }
+      setCurrGenIdx(currGenIdx + 1)
+    } else if (e.keyCode === 32) { // space
+      setCurrGenIdx(Math.max(0, currGenIdx - 1))
     }
   }
 
@@ -25,7 +31,7 @@ export default function App() {
   return (
     <div className="App">
       <Board cells={
-        gens.length ? gens[gens.length - 1] : []
+        gens[currGenIdx]
       } />
     </div>
   );
