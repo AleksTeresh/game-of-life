@@ -7,8 +7,8 @@ export interface Boardprops {
 export default function Board({ cells }: Boardprops) {
   return (
     <div className='board'>
-      {cells.map(cellRow => (
-        <Row cells={cellRow} />
+      {cells.map((cellRow, idx) => (
+        <Row key={idx} cells={cellRow} />
       ))}
     </div>
   )
@@ -20,7 +20,7 @@ interface RowProps {
 function Row({ cells }: RowProps) {
   return (
     <div className='cellRow'>
-      {cells.map(cell => <Cell {...cell} />)}
+      {cells.map((cell, idx) => <Cell key={idx} {...cell} />)}
     </div>
   )
 }
