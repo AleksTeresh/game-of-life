@@ -1,6 +1,7 @@
 import * as express from 'express'
 import * as graphqlHTTP from 'express-graphql'
 import { buildSchema } from 'graphql'
+import * as cors from 'cors'
 
 export interface CellProps {
   alive: boolean
@@ -8,9 +9,11 @@ export interface CellProps {
 
 const app = express()
 
+app.use(cors())
+
 const schema = buildSchema(`
   type Query {
-    generations: [[[Cell!]!]!]!
+    currGeneration: [[Cell!]!]!
   }
 
   type Mutation {
@@ -23,12 +26,12 @@ const schema = buildSchema(`
   }
 `)
 
-const generations = [createNewGeneration()]
+const generations: CellProps[][][] = [createNewGeneration()]
 let currGenIdx = 0
 
 const root = {
-  generations: () => {
-    return generations
+  currGeneration: () => {
+    return generations[currGenIdx]
   },
   nextGeneration: () => {
     if (currGenIdx + 1 >= generations.length) {
