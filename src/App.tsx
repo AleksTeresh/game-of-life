@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import Board from './components/Board'
-import { CellProps } from './components/Cell';
+import { CellProps } from './components/Cell'
 
+const initGeneration = createNewGeneration()
 export default function App() {
-  const [gens, setGens] = useState([createNewGeneration()])
+  const [gens, setGens] = useState([initGeneration])
   const [currGenIdx, setCurrGenIdx] = useState(0)
 
   const evenHandler = (e: any) => {
@@ -37,7 +38,7 @@ export default function App() {
   );
 }
 
-function createNewGeneration(currState?: CellProps[][]) {
+function createNewGeneration(currState?: CellProps[][]): CellProps[][] {
   if (!currState) {
     return getDefaultState()
   }
@@ -66,7 +67,7 @@ function createNewGeneration(currState?: CellProps[][]) {
     .map(row => row.slice(1, row.length - 1))
 }
 
-function getDefaultState() {
+function getDefaultState(): CellProps[][] {
   return Array(100).fill(0)
     .map(row => (
       Array(100).fill(0)
@@ -74,7 +75,7 @@ function getDefaultState() {
     ))
 }
 
-function countNeighbors(cells: CellProps[][], rowIdx: number, columnIdx: number) {
+function countNeighbors(cells: CellProps[][], rowIdx: number, columnIdx: number): number {
   return (cells[rowIdx - 1][columnIdx - 1].alive ? 1 : 0) +
     (cells[rowIdx - 1][columnIdx].alive ? 1 : 0) +
     (cells[rowIdx - 1][columnIdx + 1].alive ? 1 : 0) +
