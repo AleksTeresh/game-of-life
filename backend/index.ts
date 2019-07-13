@@ -10,8 +10,12 @@ const app = express()
 
 const schema = buildSchema(`
   type Query {
-    hello: String!
     generations: [[[Cell!]!]!]!
+  }
+
+  type Mutation {
+    nextGeneration: [[Cell!]!]!
+    prevGeneration: [[Cell!]!]!
   }
 
   type Cell {
@@ -20,13 +24,22 @@ const schema = buildSchema(`
 `)
 
 const generations = [createNewGeneration()]
+let currGenIdx = 0
 
 const root = {
-  hello: () => {
-    return 'Hello world!'
-  },
   generations: () => {
     return generations
+  },
+  nextGeneration: () => {
+    if (currGenIdx + 1 >= generations.length) {
+      generations.push(createNewGeneration(generations[generations.length - 1]))
+    }
+    currGenIdx++
+    return generations[currGenIdx]
+  },
+  prevGeneration: () => {
+    currGenIdx = Math.max(0, currGenIdx - 1)
+    return generations[currGenIdx]
   }
 }
 
