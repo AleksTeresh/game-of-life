@@ -2,10 +2,13 @@ import * as express from 'express'
 import * as graphqlHTTP from 'express-graphql'
 import { buildSchema } from 'graphql'
 import * as cors from 'cors'
-
-export interface CellProps {
-  alive: boolean
-}
+import {
+  getGenerationByIndex,
+  addGeneration,
+  clearGenerations,
+  generationCount
+} from './dbClient'
+import { Generation } from 'types'
 
 const app = express()
 
@@ -26,23 +29,25 @@ const schema = buildSchema(`
   }
 `)
 
-const generations: CellProps[][][] = [createNewGeneration()]
 let currGenIdx = 0
 
 const root = {
-  currGeneration: () => {
-    return generations[currGenIdx]
+  currGeneration: async () => {
+    const result = await getGenerationByIndex(currGenIdx)
+    return result
   },
-  nextGeneration: () => {
-    if (currGenIdx + 1 >= generations.length) {
-      generations.push(createNewGeneration(generations[generations.length - 1]))
+  nextGeneration: async () => {
+    const genCount = await generationCount()
+    if (currGenIdx + 1 >= genCount) {
+      const lastGeneration = await getGenerationByIndex(genCount - 1)
+      await addGeneration(createNewGeneration(lastGeneration), genCount)
     }
     currGenIdx++
-    return generations[currGenIdx]
+    return getGenerationByIndex(currGenIdx)
   },
-  prevGeneration: () => {
+  prevGeneration: async () => {
     currGenIdx = Math.max(0, currGenIdx - 1)
-    return generations[currGenIdx]
+    return getGenerationByIndex(currGenIdx)
   }
 }
 
@@ -56,10 +61,12 @@ app.use(
 )
 
 app.listen(3000)
-console.log('Listening on port 3000...')
 
+clearGenerations()
+  .then(() => addGeneration(createNewGeneration(), 0))
+  .then(() => console.log('Listening on port 3000...'))
 
-function createNewGeneration(currState?: CellProps[][]): CellProps[][] {
+function createNewGeneration(currState?: Generation): Generation {
   if (!currState) {
     return getDefaultState()
   }
@@ -88,7 +95,7 @@ function createNewGeneration(currState?: CellProps[][]): CellProps[][] {
     .map(row => row.slice(1, row.length - 1))
 }
 
-function getDefaultState(): CellProps[][] {
+function getDefaultState(): Generation {
   return Array(100).fill(0)
     .map(() => (
       Array(100).fill(0)
@@ -96,7 +103,7 @@ function getDefaultState(): CellProps[][] {
     ))
 }
 
-function countNeighbors(cells: CellProps[][], rowIdx: number, columnIdx: number): number {
+function countNeighbors(cells: Generation, rowIdx: number, columnIdx: number): number {
   return (cells[rowIdx - 1][columnIdx - 1].alive ? 1 : 0) +
     (cells[rowIdx - 1][columnIdx].alive ? 1 : 0) +
     (cells[rowIdx - 1][columnIdx + 1].alive ? 1 : 0) +
