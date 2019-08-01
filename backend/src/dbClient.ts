@@ -5,7 +5,7 @@ const Pool  = pg.Pool
 const pool = new Pool({
   user: 'me',
   host: 'localhost',
-  database: 'gameoflife',
+  database: 'game-of-life',
   password: 'password',
   port: 5432,
 })
@@ -33,5 +33,5 @@ export const generationCount = async (): Promise<number> => {
 export const createUser = async (user: UserWithPassword): Promise<User> => {
   await pool.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3)', [user.name, user.email, user.hashedPassword])
   const result = await pool.query('SELECT name, email, password FROM users WHERE email = $1', [user.email])
-  return result.rows[0].count
+  return result.rows[0]
 }

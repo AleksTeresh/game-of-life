@@ -67,7 +67,7 @@ const root = {
     currGenIdx = Math.max(0, currGenIdx - 1)
     return getGenerationByIndex(currGenIdx)
   },
-  signup: async (_parent, args) => {
+  signup: async (args: { email: string, password: string, name: string }) => {
     const hashedPassword = await bcrypt.hash(args.password, 10)
     const user = await createUser({ ...args, hashedPassword })
     const token = jwt.sign({ userId: user.id }, SECRET)
