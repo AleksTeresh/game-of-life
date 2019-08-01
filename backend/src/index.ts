@@ -11,7 +11,7 @@ import {
   generationCount,
   createUser
 } from './dbClient'
-import { Generation } from 'types'
+import { Generation } from './types'
 
 const SECRET = '42'
 
