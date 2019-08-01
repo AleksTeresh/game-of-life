@@ -1,5 +1,5 @@
 import * as pg from 'pg'
-import { Generation } from './types'
+import { Generation, User, UserWithPassword } from './types'
 
 const Pool  = pg.Pool
 const pool = new Pool({
@@ -27,5 +27,11 @@ export const clearGenerations = async (): Promise<void> => {
 
 export const generationCount = async (): Promise<number> => {
   const result = await pool.query('SELECT COUNT(data) FROM generations')
+  return result.rows[0].count
+}
+
+export const createUser = async (user: UserWithPassword): Promise<User> => {
+  await pool.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3)', [user.name, user.email, user.hashedPassword])
+  const result = await pool.query('SELECT name, email, password FROM users WHERE email = $1', [user.email])
   return result.rows[0].count
 }

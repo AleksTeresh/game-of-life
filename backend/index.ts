@@ -2,13 +2,18 @@ import * as express from 'express'
 import * as graphqlHTTP from 'express-graphql'
 import { buildSchema } from 'graphql'
 import * as cors from 'cors'
+import * as jwt from 'jsonwebtoken'
+import * as bcrypt from 'bcryptjs'
 import {
   getGenerationByIndex,
   addGeneration,
   clearGenerations,
-  generationCount
+  generationCount,
+  createUser
 } from './dbClient'
 import { Generation } from 'types'
+
+const SECRET = '42'
 
 const app = express()
 
@@ -22,10 +27,23 @@ const schema = buildSchema(`
   type Mutation {
     nextGeneration: [[Cell!]!]!
     prevGeneration: [[Cell!]!]!
+    signup(email: String!, password: String!, name: String!): AuthPayload
+    login(email: String!, password: String!): AuthPayload
   }
 
   type Cell {
     alive: Boolean!
+  }
+
+  type AuthPayload {
+    token: String
+    user: User
+  }
+  
+  type User {
+    id: ID!
+    name: String!
+    email: String!
   }
 `)
 
@@ -48,6 +66,16 @@ const root = {
   prevGeneration: async () => {
     currGenIdx = Math.max(0, currGenIdx - 1)
     return getGenerationByIndex(currGenIdx)
+  },
+  signup: async (_parent, args) => {
+    const hashedPassword = await bcrypt.hash(args.password, 10)
+    const user = await createUser({ ...args, hashedPassword })
+    const token = jwt.sign({ userId: user.id }, SECRET)
+
+    return {
+      token,
+      user
+    }
   }
 }
 
