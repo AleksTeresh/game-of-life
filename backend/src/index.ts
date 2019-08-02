@@ -23,6 +23,7 @@ app.use(cors())
 const schema = buildSchema(`
   type Query {
     currGeneration: [[Cell!]!]!
+    currGenerationIndex: Int!
   }
 
   type Mutation {
@@ -53,12 +54,17 @@ const root = {
     const userId = getUserId(request)
     const user = await getUserById(userId)
     const result = await getGenerationByIndex(user.curr_generation_index, userId)
-    console.log(user.curr_generation_index)
+
     if (!result) {
       throw new Error('Something went wrong. No current generation found')
     }
 
     return result
+  },
+  currGenerationIndex: async (_args, request): Promise<number> => {
+    const userId = getUserId(request)
+    const user = await getUserById(userId)
+    return user.curr_generation_index
   },
   nextGeneration: async (_args, request): Promise<Generation> => {
     const userId = getUserId(request)

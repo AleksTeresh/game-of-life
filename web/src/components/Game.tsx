@@ -10,7 +10,8 @@ const GENERATIONS_QUERY = gql`
   {
     currGeneration {
       alive
-    }
+    },
+    currGenerationIndex
   }
 `
 
@@ -61,7 +62,7 @@ export default function Game({ client }: { client: any }) {
   })
 
   return (
-    <div>
+    <>
       <Query query={GENERATIONS_QUERY}>
       {({ loading, error, data }: { loading: boolean, error?: any, data: any }) => {
         if (loading) return <div>Fetching</div>
@@ -72,10 +73,13 @@ export default function Game({ client }: { client: any }) {
 
         const currGeneration = data.currGeneration
         return (
-          <Board cells={currGeneration} />
+          <>
+            <label style={{ float: 'right' }}>{data.currGenerationIndex}</label>
+            <Board cells={currGeneration} />
+          </>
         )
       }}
       </Query>      
-    </div>
+    </>
   );
 }
