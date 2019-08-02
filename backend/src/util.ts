@@ -12,7 +12,7 @@ export const getUserId = (request) => {
   if (Authorization) {
     const token = Authorization.replace('Bearer ', '')
     const jwtData = jwt.verify(token, SECRET)
-    console.log(jwtData)
+
     if (isUserData(jwtData)) {
       return jwtData.userId
     } else {

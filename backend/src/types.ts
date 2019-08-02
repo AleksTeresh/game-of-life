@@ -11,7 +11,8 @@ export interface User {
 }
 
 export interface DbUser extends User {
-  hashedPassword: string
+  password: string,
+  curr_generation_index: number
 }
 
 export interface UserWithPassword extends Omit<User, 'id'> {

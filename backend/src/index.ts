@@ -9,7 +9,9 @@ import {
   addGeneration,
   generationCount,
   createUser,
-  getUserByEmail
+  getUserByEmail,
+  getUserById,
+  setCurrGenerationIdx
 } from './dbClient'
 import { Generation, AuthResponse } from './types'
 import { SECRET, getUserId } from './util'
@@ -46,12 +48,12 @@ const schema = buildSchema(`
   }
 `)
 
-let currGenIdx = 0
-
 const root = {
   currGeneration: async (_args, request): Promise<Generation> => {
     const userId = getUserId(request)
-    const result = await getGenerationByIndex(currGenIdx, userId)
+    const user = await getUserById(userId)
+    const result = await getGenerationByIndex(user.curr_generation_index, userId)
+    console.log(user.curr_generation_index)
     if (!result) {
       throw new Error('Something went wrong. No current generation found')
     }
@@ -61,12 +63,16 @@ const root = {
   nextGeneration: async (_args, request): Promise<Generation> => {
     const userId = getUserId(request)
     const genCount = await generationCount(userId)
-    if (currGenIdx + 1 >= genCount) {
+    const user = await getUserById(userId)
+    if (user.curr_generation_index + 1 >= genCount) {
       const lastGeneration = await getGenerationByIndex(genCount - 1, userId)
       await addGeneration(createNewGeneration(lastGeneration), genCount, userId)
     }
-    currGenIdx++
-    const nextGeneration = await getGenerationByIndex(currGenIdx, userId)
+
+    const nextGenIdx = user.curr_generation_index + 1
+    await setCurrGenerationIdx(nextGenIdx, user.id)
+
+    const nextGeneration = await getGenerationByIndex(nextGenIdx, userId)
     if (!nextGeneration) {
       throw new Error('Something went wrong. Cannot get next generation')
     }
@@ -74,9 +80,12 @@ const root = {
     return nextGeneration
   },
   prevGeneration: async (_args, request): Promise<Generation> => {
-    currGenIdx = Math.max(0, currGenIdx - 1)
     const userId = getUserId(request)
-    const prevGeneration = await getGenerationByIndex(currGenIdx, userId)
+    const user = await getUserById(userId)
+    const prevGenIdx = Math.max(0, user.curr_generation_index - 1)
+
+    await setCurrGenerationIdx(prevGenIdx, user.id)
+    const prevGeneration = await getGenerationByIndex(prevGenIdx, userId)
     if (!prevGeneration) {
       throw new Error('Something went wrong. Cannot get previous generation')
     }
@@ -105,7 +114,7 @@ const root = {
       throw new Error('No such user found')
     }
 
-    const valid = await bcrypt.compare(args.password, userWithPassword.hashedPassword)
+    const valid = await bcrypt.compare(args.password, userWithPassword.password)
     if (!valid) {
       throw new Error('Invalid password')
     }

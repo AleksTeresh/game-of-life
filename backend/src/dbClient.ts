@@ -37,11 +37,20 @@ export const generationCount = async (userId: string): Promise<number> => {
 }
 
 export const createUser = async (user: UserWithPassword): Promise<DbUser> => {
-  await pool.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3)', [user.name, user.email, user.hashedPassword])
+  await pool.query('INSERT INTO users (name, email, password, curr_generation_index) VALUES ($1, $2, $3, $4)', [user.name, user.email, user.hashedPassword, 0])
   return getUserByEmail(user.email)
 }
 
 export const getUserByEmail = async (email: string): Promise<DbUser> => {
-  const result = await pool.query('SELECT id, name, email, password FROM users WHERE email = $1', [email])
+  const result = await pool.query('SELECT id, name, email, password, curr_generation_index FROM users WHERE email = $1', [email])
   return result.rows[0]
+}
+
+export const getUserById = async (id: string): Promise<DbUser> => {
+  const result = await pool.query('SELECT id, name, email, password, curr_generation_index FROM users WHERE id = $1', [id])
+  return result.rows[0]
+}
+
+export const setCurrGenerationIdx = async (genIdx: number, userId: string): Promise<void> => {
+  await pool.query('UPDATE users SET curr_generation_index = $1 WHERE id = $2', [genIdx, userId])
 }

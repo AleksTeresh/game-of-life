@@ -2,7 +2,8 @@ CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   name VARCHAR(30),
   email VARCHAR(30),
-  password VARCHAR
+  password VARCHAR,
+  curr_generation_index INTEGER NOT NULL
 );
 
 CREATE TABLE generations (
