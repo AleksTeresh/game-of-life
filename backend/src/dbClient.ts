@@ -1,5 +1,5 @@
 import * as pg from 'pg'
-import { Generation, User, UserWithPassword } from './types'
+import { Generation, UserWithPassword, DbUser } from './types'
 
 const Pool  = pg.Pool
 const pool = new Pool({
@@ -30,8 +30,12 @@ export const generationCount = async (): Promise<number> => {
   return result.rows[0].count
 }
 
-export const createUser = async (user: UserWithPassword): Promise<User> => {
+export const createUser = async (user: UserWithPassword): Promise<DbUser> => {
   await pool.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3)', [user.name, user.email, user.hashedPassword])
-  const result = await pool.query('SELECT name, email, password FROM users WHERE email = $1', [user.email])
+  return getUserByEmail(user.email)
+}
+
+export const getUserByEmail = async (email: string): Promise<DbUser> => {
+  const result = await pool.query('SELECT name, email, password FROM users WHERE email = $1', [email])
   return result.rows[0]
 }

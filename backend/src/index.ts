@@ -9,9 +9,10 @@ import {
   addGeneration,
   clearGenerations,
   generationCount,
-  createUser
+  createUser,
+  getUserByEmail
 } from './dbClient'
-import { Generation } from './types'
+import { Generation, AuthResponse } from './types'
 
 const SECRET = '42'
 
@@ -50,31 +51,71 @@ const schema = buildSchema(`
 let currGenIdx = 0
 
 const root = {
-  currGeneration: async () => {
+  currGeneration: async (): Promise<Generation> => {
     const result = await getGenerationByIndex(currGenIdx)
+    if (!result) {
+      throw new Error('Something went wrong. No current generation found')
+    }
+
     return result
   },
-  nextGeneration: async () => {
+  nextGeneration: async (): Promise<Generation> => {
     const genCount = await generationCount()
     if (currGenIdx + 1 >= genCount) {
       const lastGeneration = await getGenerationByIndex(genCount - 1)
       await addGeneration(createNewGeneration(lastGeneration), genCount)
     }
     currGenIdx++
-    return getGenerationByIndex(currGenIdx)
+    const nextGeneration = await getGenerationByIndex(currGenIdx)
+    if (!nextGeneration) {
+      throw new Error('Something went wrong. Cannot get next generation')
+    }
+
+    return nextGeneration
   },
-  prevGeneration: async () => {
+  prevGeneration: async (): Promise<Generation> => {
     currGenIdx = Math.max(0, currGenIdx - 1)
-    return getGenerationByIndex(currGenIdx)
+    const prevGeneration = await getGenerationByIndex(currGenIdx)
+    if (!prevGeneration) {
+      throw new Error('Something went wrong. Cannot get previous generation')
+    }
+
+    return prevGeneration
   },
-  signup: async (args: { email: string, password: string, name: string }) => {
+  signup: async (args: { email: string, password: string, name: string }): Promise<AuthResponse> => {
     const hashedPassword = await bcrypt.hash(args.password, 10)
-    const user = await createUser({ ...args, hashedPassword })
-    const token = jwt.sign({ userId: user.id }, SECRET)
+    const userWithPassword = await createUser({ ...args, hashedPassword })
+    const token = jwt.sign({ userId: userWithPassword.id }, SECRET)
 
     return {
       token,
-      user
+      user: {
+        id: userWithPassword.id,
+        name: userWithPassword.name,
+        email: userWithPassword.email,
+      }
+    }
+  },
+  login: async (args: { email: string, password: string }): Promise<AuthResponse> => {
+    const userWithPassword = await getUserByEmail(args.email)
+    if (!userWithPassword) {
+      throw new Error('No such user found')
+    }
+
+    const valid = await bcrypt.compare(args.password, userWithPassword.hashedPassword)
+    if (!valid) {
+      throw new Error('Invalid password')
+    }
+
+    const token = jwt.sign({ userId: userWithPassword.id }, SECRET)
+
+    return {
+      token,
+      user: {
+        id: userWithPassword.id,
+        name: userWithPassword.name,
+        email: userWithPassword.email,
+      }
     }
   }
 }
