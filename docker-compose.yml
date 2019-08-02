@@ -1,0 +1,37 @@
+version: '3'
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=me
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=game-of-life
+    volumes:
+      - database_data:/var/lib/postgresql/data
+  backend:
+    restart: unless-stopped
+    build: ./backend
+    expose:
+      - 3000
+    environment:
+      TEST: test
+    ports:
+      - 3000:3000
+    links:
+      - db
+  web:
+    restart: unless-stopped
+    build: ./web
+    expose:
+      - 80
+    ports:
+      - 80:80
+    links:
+      - backend
+
+volumes:
+  database_data:
+    driver: local
