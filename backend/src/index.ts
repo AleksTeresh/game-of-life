@@ -11,7 +11,8 @@ import {
   createUser,
   getUserByEmail,
   getUserById,
-  setCurrGenerationIdx
+  setCurrGenerationIdx,
+  createMissingTables
 } from './dbClient'
 import { Generation, AuthResponse } from './types'
 import { SECRET, getUserId } from './util'
@@ -147,8 +148,9 @@ app.use(
   }),
 )
 
-app.listen(3000)
-console.log('Listening on port 3000...')
+createMissingTables()
+  .then(() => app.listen(3000))
+  .then(() => console.log('Listening on port 3000...'))
 
 function createNewGeneration(currState?: Generation): Generation {
   if (!currState) {

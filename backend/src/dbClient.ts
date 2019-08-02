@@ -10,6 +10,28 @@ const pool = new Pool({
   port: 5432,
 })
 
+export const createMissingTables = async (): Promise<void> => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(30),
+      email VARCHAR(30),
+      password VARCHAR,
+      curr_generation_index INTEGER NOT NULL
+    );
+  `)
+  await pool.query(`
+    CREATE TABLE generations (
+      id SERIAL PRIMARY KEY,
+      index VARCHAR(30),
+      data JSONB,
+      password VARCHAR,
+      user_id SERIAL,
+      FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+  `)
+}
+
 export const getGenerationByIndex = async (index: number, userId: string): Promise<Generation | undefined> => {
   const result = await pool.query(
     'SELECT data FROM generations WHERE index = $1 AND user_id = $2',
