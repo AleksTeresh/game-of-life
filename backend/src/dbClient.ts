@@ -10,23 +10,29 @@ const pool = new Pool({
   port: 5432,
 })
 
-export const getGenerationByIndex = async (index: number): Promise<Generation | undefined> => {
-  const result = await pool.query('SELECT data FROM generations WHERE index = $1', [index])
+export const getGenerationByIndex = async (index: number, userId: string): Promise<Generation | undefined> => {
+  const result = await pool.query(
+    'SELECT data FROM generations WHERE index = $1 AND user_id = $2',
+    [index, userId]
+  )
   return result.rows.length > 0
     ? result.rows[0].data
     : undefined
 }
 
-export const addGeneration = async (gen: Generation, index: number): Promise<void> => {
-  await pool.query('INSERT INTO generations (index, data) VALUES ($1, $2)', [index, JSON.stringify(gen)])
+export const addGeneration = async (gen: Generation, index: number, userId: string): Promise<void> => {
+  await pool.query(
+    'INSERT INTO generations (index, data, user_id) VALUES ($1, $2, $3)',
+    [index, JSON.stringify(gen), userId]
+  )
 }
 
-export const clearGenerations = async (): Promise<void> => {
-  await pool.query('DELETE FROM generations')
+export const clearGenerations = async (userId: string): Promise<void> => {
+  await pool.query('DELETE FROM generations WHERE user_id = $1', [userId])
 }
 
-export const generationCount = async (): Promise<number> => {
-  const result = await pool.query('SELECT COUNT(data) FROM generations')
+export const generationCount = async (userId: string): Promise<number> => {
+  const result = await pool.query('SELECT COUNT(data) FROM generations WHERE user_id = $1', [userId])
   return result.rows[0].count
 }
 
@@ -36,6 +42,6 @@ export const createUser = async (user: UserWithPassword): Promise<DbUser> => {
 }
 
 export const getUserByEmail = async (email: string): Promise<DbUser> => {
-  const result = await pool.query('SELECT name, email, password FROM users WHERE email = $1', [email])
+  const result = await pool.query('SELECT id, name, email, password FROM users WHERE email = $1', [email])
   return result.rows[0]
 }

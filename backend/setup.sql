@@ -9,6 +9,8 @@ CREATE TABLE generations (
   id SERIAL PRIMARY KEY,
   index VARCHAR(30),
   data JSONB,
-  password VARCHAR
+  password VARCHAR,
+  user_id SERIAL,
+  FOREIGN KEY (user_id) REFERENCES users (id)
 );
 

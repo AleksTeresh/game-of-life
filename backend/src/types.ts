@@ -5,7 +5,7 @@ export interface CellProps {
 export type Generation = CellProps[][]
 
 export interface User {
-  id: number
+  id: string
   name: string
   email: string
 }
@@ -21,4 +21,8 @@ export interface UserWithPassword extends Omit<User, 'id'> {
 export interface AuthResponse {
   token: string
   user: User
+}
+
+export interface JwtPayload {
+  userId: string
 }

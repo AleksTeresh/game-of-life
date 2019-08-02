@@ -7,14 +7,12 @@ import * as bcrypt from 'bcryptjs'
 import {
   getGenerationByIndex,
   addGeneration,
-  clearGenerations,
   generationCount,
   createUser,
   getUserByEmail
 } from './dbClient'
 import { Generation, AuthResponse } from './types'
-
-const SECRET = '42'
+import { SECRET, getUserId } from './util'
 
 const app = express()
 
@@ -51,31 +49,34 @@ const schema = buildSchema(`
 let currGenIdx = 0
 
 const root = {
-  currGeneration: async (): Promise<Generation> => {
-    const result = await getGenerationByIndex(currGenIdx)
+  currGeneration: async (_args, request): Promise<Generation> => {
+    const userId = getUserId(request)
+    const result = await getGenerationByIndex(currGenIdx, userId)
     if (!result) {
       throw new Error('Something went wrong. No current generation found')
     }
 
     return result
   },
-  nextGeneration: async (): Promise<Generation> => {
-    const genCount = await generationCount()
+  nextGeneration: async (_args, request): Promise<Generation> => {
+    const userId = getUserId(request)
+    const genCount = await generationCount(userId)
     if (currGenIdx + 1 >= genCount) {
-      const lastGeneration = await getGenerationByIndex(genCount - 1)
-      await addGeneration(createNewGeneration(lastGeneration), genCount)
+      const lastGeneration = await getGenerationByIndex(genCount - 1, userId)
+      await addGeneration(createNewGeneration(lastGeneration), genCount, userId)
     }
     currGenIdx++
-    const nextGeneration = await getGenerationByIndex(currGenIdx)
+    const nextGeneration = await getGenerationByIndex(currGenIdx, userId)
     if (!nextGeneration) {
       throw new Error('Something went wrong. Cannot get next generation')
     }
 
     return nextGeneration
   },
-  prevGeneration: async (): Promise<Generation> => {
+  prevGeneration: async (_args, request): Promise<Generation> => {
     currGenIdx = Math.max(0, currGenIdx - 1)
-    const prevGeneration = await getGenerationByIndex(currGenIdx)
+    const userId = getUserId(request)
+    const prevGeneration = await getGenerationByIndex(currGenIdx, userId)
     if (!prevGeneration) {
       throw new Error('Something went wrong. Cannot get previous generation')
     }
@@ -86,6 +87,8 @@ const root = {
     const hashedPassword = await bcrypt.hash(args.password, 10)
     const userWithPassword = await createUser({ ...args, hashedPassword })
     const token = jwt.sign({ userId: userWithPassword.id }, SECRET)
+
+    await addGeneration(createNewGeneration(), 0, userWithPassword.id)
 
     return {
       token,
@@ -130,10 +133,7 @@ app.use(
 )
 
 app.listen(3000)
-
-clearGenerations()
-  .then(() => addGeneration(createNewGeneration(), 0))
-  .then(() => console.log('Listening on port 3000...'))
+console.log('Listening on port 3000...')
 
 function createNewGeneration(currState?: Generation): Generation {
   if (!currState) {

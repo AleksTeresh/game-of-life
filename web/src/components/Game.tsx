@@ -3,6 +3,8 @@ import gql from 'graphql-tag'
 import { Query } from 'react-apollo'
 
 import Board from './Board'
+import { AUTH_TOKEN } from '../constants';
+import history from '../history';
 
 const GENERATIONS_QUERY = gql`
   {
@@ -48,6 +50,13 @@ export default function Game({ client }: { client: any }) {
     window.addEventListener("keypress", evenHandler, false)
     return () => {
       window.removeEventListener("keypress", evenHandler, false)
+    }
+  })
+
+  useEffect(() => {
+    const jwtToken = localStorage.getItem(AUTH_TOKEN)
+    if (!jwtToken) {
+      history.push('/login')
     }
   })
 
