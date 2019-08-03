@@ -21,7 +21,7 @@ export const createMissingTables = async (): Promise<void> => {
     );
   `)
   await pool.query(`
-    CREATE TABLE generations (
+    CREATE TABLE IF NOT EXISTS generations (
       id SERIAL PRIMARY KEY,
       index VARCHAR(30),
       data JSONB,
