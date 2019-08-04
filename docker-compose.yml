@@ -17,7 +17,10 @@ services:
     expose:
       - 3000
     environment:
-      TEST: test
+      - DB_HOST=db
+      - DB_USER=me
+      - DB_PASSWORD=password
+      - DB_NAME=game-of-life
     ports:
       - 3000:3000
     links:

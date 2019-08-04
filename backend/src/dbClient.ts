@@ -3,10 +3,10 @@ import { Generation, UserWithPassword, DbUser } from './types'
 
 const Pool  = pg.Pool
 const pool = new Pool({
-  user: 'me',
-  host: 'db',
-  database: 'game-of-life',
-  password: 'password',
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
   port: 5432,
 })
 
