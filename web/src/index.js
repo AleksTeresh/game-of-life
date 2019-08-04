@@ -14,7 +14,7 @@ import history from "./history";
 import { AUTH_TOKEN } from './constants';
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:3000/graphql'
+  uri: 'http://127.0.0.1:3000/graphql'
 })
 
 const authLink = setContext((_, { headers }) => {
