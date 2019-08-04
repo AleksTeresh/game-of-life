@@ -1,0 +1,1 @@
+$(aws ecs update-service --cluster game-of-life --service game-of-life --force-new-deployment)
